@@ -43,3 +43,14 @@ Makefile
 *.la
 *.a
 *.so
+
+# Debian files
+debian/autoreconf.*
+debian/build-tree/
+debian/files
+debian/*substvars
+debian/*debhelper*
+debian/libivykis0-dbg/
+debian/libivykis0/
+debian/libivykis-dev/
+debian/tmp/
