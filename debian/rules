@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_OPTIONS += -O-Bdebian/build-tree --dbg-package=libivykis0-dbg
+
+%:
+	dh $@ --with autoreconf

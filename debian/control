@@ -1,0 +1,57 @@
+Source: ivykis
+Priority: extra
+Maintainer: Gergely Nagy <algernon@madhouse-project.org>
+Build-Depends: debhelper (>= 8.9.13~), dh-autoreconf
+Standards-Version: 3.9.2
+Section: libs
+Homepage: http://libivykis.sourceforge.net/
+Vcs-Git: git://git.madhouse-project.org/debian/ivykis.git
+Vcs-Browser: http://git.madhouse-project.org/debian/ivykis/
+
+Package: libivykis0
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Section: libs
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Asynchronous I/O readiness notification library
+ The ivykis library is a thin, portable wrapper around OS-provided
+ mechanisms such as epoll(4), kqueue(2), poll(2) and select(2). It was
+ mainly designed for building high-performance network applications,
+ but can be used in any event-driver application that uses pollable
+ file descriptors as its event sources.
+ .
+ Programs written to the ivykis API are generally single-threaded (or
+ use only a small number of threads), and never block on I/O. All
+ input and output is done in a nonblocking fashion, with I/O readiness
+ notification delivered via callback functions.
+
+Package: libivykis-dev
+Section: libdevel
+Architecture: any
+Depends: libivykis0 (= ${binary:Version}), ${misc:Depends}
+Description: Development libraries, header files and docs for libivykis
+ Contains the header files, documentation, examples and static
+ libraries for use in developing applications that use the libivykis
+ library.
+ .
+ The ivykis library is a thin, portable wrapper around OS-provided
+ mechanisms such as epoll(4), kqueue(2), poll(2) and select(2). It was
+ mainly designed for building high-performance network applications,
+ but can be used in any event-driver application that uses pollable
+ file descriptors as its event sources.
+
+Package: libivykis0-dbg
+Multi-Arch: same
+Section: debug
+Architecture: any
+Depends: libivykis0 (= ${binary:Version}), ${misc:Depends}
+Description: Asynchronous I/O readiness notification library (debug symbols)
+ Contains the debug symbols for the libivykis library. Most people
+ will not need this package.
+ .
+ The ivykis library is a thin, portable wrapper around OS-provided
+ mechanisms such as epoll(4), kqueue(2), poll(2) and select(2). It was
+ mainly designed for building high-performance network applications,
+ but can be used in any event-driver application that uses pollable
+ file descriptors as its event sources.
