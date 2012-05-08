@@ -1,24 +1,23 @@
-Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=174&view=co&pathrev=174
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: ivykis
 Upstream-Contact: Lennert Buytenhek <buytenh@wantstofly.org>
 Source: git://github.com/buytenh/ivykis.git
-Copyright: Copyright (C) 2002-2011 Lennert Buytenhek <buytenh@wantstofly.org>
+Copyright: Copyright (C) 2002-2012 Lennert Buytenhek <buytenh@wantstofly.org>
 
 Files: *
-Copyright: Copyright (C) 2002-2011 Lennert Buytenhek <buytenh@wantstofly.org>
+Copyright: Copyright (C) 2002-2012 Lennert Buytenhek <buytenh@wantstofly.org>
 License: LGPL-2.1+
 
 Files: lib/man3/* modules/man3/*
-Copyright: Copyright (C) 2002-2011 Lennert Buytenhek <buytenh@wantstofly.org>
-License:
+Copyright: Copyright (C) 2002-2012 Lennert Buytenhek <buytenh@wantstofly.org>
+License: other
  Permission is granted to distribute possibly modified copies
  of this page provided the header is included verbatim,
  and in case of nontrivial modification author and date
  of the modification is added to the header.
 
-
 Files: debian/*
-Copyright: Copyright (C) 2011 Gergely Nagy <algernon@madhouse-project.org>
+Copyright: Copyright (C) 2011-2012 Gergely Nagy <algernon@madhouse-project.org>
 License: GPL-3+
 
 License: GPL-3+

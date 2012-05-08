@@ -1,8 +1,8 @@
 Source: ivykis
 Priority: extra
 Maintainer: Gergely Nagy <algernon@madhouse-project.org>
-Build-Depends: debhelper (>= 8.9.13~), dh-autoreconf
-Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9~), dh-autoreconf
+Standards-Version: 3.9.3
 Section: libs
 Homepage: http://libivykis.sourceforge.net/
 Vcs-Git: git://git.madhouse-project.org/debian/ivykis.git
