@@ -1,5 +1,5 @@
-ivykis (0.26-1~preview1) unstable; urgency=low
+ivykis (0.29~git0.28+25-0~preview1) unstable; urgency=low
 
   * Initial release (Closes: #651176)
 
- -- Gergely Nagy <algernon@madhouse-project.org>  Tue, 27 Dec 2011 11:47:31 +0100
+ -- Gergely Nagy <algernon@madhouse-project.org>  Tue, 08 May 2012 22:13:32 +0200
