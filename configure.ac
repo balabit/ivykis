@@ -65,7 +65,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stddef.h \
     AC_MSG_ERROR(some required header files not installed.))
 
 # system headers (optional)
-AC_CHECK_HEADERS([sys/select.h sys/devpoll.h sys/timers.h])
+AC_CHECK_HEADERS([sys/select.h sys/devpoll.h sys/eventfd.h sys/timers.h])
 
 # system library functions (required)
 AC_CHECK_FUNCS([dup2 fork malloc memcmp memmove memset select strerror],,
@@ -94,7 +94,7 @@ AC_CHECK_FUNC(socket, [],
 
 
 # functions that we could use if present
-AC_CHECK_FUNCS([clock_gettime gettimeofday pthread_spin_lock kqueue epoll_create wait4])
+AC_CHECK_FUNCS([clock_gettime gettimeofday pthread_spin_lock kqueue epoll_create eventfd wait4])
 
 for hdr in 'sys/timers.h' 'sys/time.h' 'time.h' 'pthread.h'; do
     AC_CHECK_MEMBER(struct timespec.tv_nsec,
