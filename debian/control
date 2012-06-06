@@ -11,7 +11,6 @@ Vcs-Browser: http://git.madhouse-project.org/debian/ivykis/
 Package: libivykis0
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Section: libs
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: Asynchronous I/O readiness notification library
@@ -30,7 +29,7 @@ Package: libivykis-dev
 Section: libdevel
 Architecture: any
 Depends: libivykis0 (= ${binary:Version}), ${misc:Depends}
-Conflicts: libsyslog-ng-dev (<< 3.3.6~)
+Breaks: libsyslog-ng-dev (<< 3.3.6~)
 Replaces: libsyslog-ng-dev (<< 3.3.6~)
 Description: Development libraries, header files and docs for libivykis
  Contains the header files, documentation, examples and static
