@@ -16,4 +16,5 @@ The repository has three main branches, as far as Debian is concerned:
 
 Any patches on top of upstream must be applied to the patched branch,
 which in turn, will get merged into the debian branch. Upon a debian
-release, the debian branch gets tagged.
+release, both the patched and debian branches gets tagged, the former
+with debian/patches/$V, the latter with debian/$V.

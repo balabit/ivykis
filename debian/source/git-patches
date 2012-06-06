@@ -1,1 +1,1 @@
-v$UPSTREAM_REF-trunk..debian/$DEB_REF
+v$UPSTREAM_REF-trunk..debian/patched/$DEB_REF
