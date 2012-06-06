@@ -169,23 +169,16 @@ static void got_server_connect_reply(void *_k)
 	k->cs.to_fd = k->server_fd.fd;
 	k->cs.cookie = k;
 	k->cs.set_bands = cs_set_bands;
-	k->cs.relay_eof = 0;
-	if (iv_fd_pump_init(&k->cs)) {
-		__kojine_kill(k);
-		return;
-	}
+	k->cs.flags = 0;
+	iv_fd_pump_init(&k->cs);
 
 	IV_FD_PUMP_INIT(&k->sc);
 	k->sc.from_fd = k->server_fd.fd;
 	k->sc.to_fd = k->client_fd.fd;
 	k->sc.cookie = k;
 	k->sc.set_bands = sc_set_bands;
-	k->sc.relay_eof = 0;
-	if (iv_fd_pump_init(&k->sc)) {
-		iv_fd_pump_destroy(&k->cs);
-		__kojine_kill(k);
-		return;
-	}
+	k->sc.flags = 0;
+	iv_fd_pump_init(&k->sc);
 }
 
 static void got_server_auth_reply(void *_k)

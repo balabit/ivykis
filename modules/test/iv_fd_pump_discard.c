@@ -33,27 +33,18 @@ struct connection {
 static int devnull;
 
 
-static void __conn_kill(struct connection *conn)
-{
-	iv_fd_unregister(&conn->sock);
-	close(conn->sock.fd);
-
-	free(conn);
-}
-
-static void conn_kill(struct connection *conn)
-{
-	iv_fd_pump_destroy(&conn->pump);
-
-	__conn_kill(conn);
-}
-
 static void conn_pump(void *_conn)
 {
 	struct connection *conn = (struct connection *)_conn;
 
-	if (iv_fd_pump_pump(&conn->pump) <= 0)
-		conn_kill(conn);
+	if (iv_fd_pump_pump(&conn->pump) <= 0) {
+		iv_fd_pump_destroy(&conn->pump);
+
+		iv_fd_unregister(&conn->sock);
+		close(conn->sock.fd);
+
+		free(conn);
+	}
 }
 
 static void conn_set_bands(void *_conn, int pollin, int pollout)
@@ -96,9 +87,8 @@ static void got_connection(void *_dummy)
 	conn->pump.to_fd = devnull;
 	conn->pump.cookie = conn;
 	conn->pump.set_bands = conn_set_bands;
-	conn->pump.relay_eof = 0;
-	if (iv_fd_pump_init(&conn->pump))
-		__conn_kill(conn);
+	conn->pump.flags = 0;
+	iv_fd_pump_init(&conn->pump);
 }
 
 static int open_listening_socket(void)

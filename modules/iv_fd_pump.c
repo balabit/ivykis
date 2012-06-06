@@ -210,7 +210,7 @@ static struct iv_fd_pump_buf *iv_fd_pump_buf(struct iv_fd_pump *ip)
 	return (struct iv_fd_pump_buf *)ip->buf;
 }
 
-IV_API int iv_fd_pump_init(struct iv_fd_pump *ip)
+void iv_fd_pump_init(struct iv_fd_pump *ip)
 {
 	if (splice_available == -1)
 		check_splice_available();
@@ -221,11 +221,9 @@ IV_API int iv_fd_pump_init(struct iv_fd_pump *ip)
 	ip->saw_fin = 0;
 
 	ip->set_bands(ip->cookie, 1, 0);
-
-	return 0;
 }
 
-IV_API void iv_fd_pump_destroy(struct iv_fd_pump *ip)
+void iv_fd_pump_destroy(struct iv_fd_pump *ip)
 {
 	struct iv_fd_pump_buf *buf = iv_fd_pump_buf(ip);
 
@@ -276,7 +274,7 @@ static int iv_fd_pump_try_input(struct iv_fd_pump *ip)
 	if (ret == 0) {
 		ip->saw_fin = 1;
 		if (!ip->bytes) {
-			if (ip->relay_eof)
+			if (ip->flags & IV_FD_PUMP_FLAG_RELAY_EOF)
 				shutdown(ip->to_fd, SHUT_WR);
 			ip->saw_fin = 2;
 		}
@@ -311,7 +309,7 @@ static int iv_fd_pump_try_output(struct iv_fd_pump *ip)
 		memmove(buf->buf, buf->buf + ret, ip->bytes);
 
 	if (!ip->bytes && ip->saw_fin == 1) {
-		if (ip->relay_eof)
+		if (ip->flags & IV_FD_PUMP_FLAG_RELAY_EOF)
 			shutdown(ip->to_fd, SHUT_WR);
 		ip->saw_fin = 2;
 	}
@@ -350,7 +348,7 @@ static int __iv_fd_pump_pump(struct iv_fd_pump *ip)
 	abort();
 }
 
-IV_API int iv_fd_pump_pump(struct iv_fd_pump *ip)
+int iv_fd_pump_pump(struct iv_fd_pump *ip)
 {
 	int ret;
 
@@ -367,7 +365,7 @@ IV_API int iv_fd_pump_pump(struct iv_fd_pump *ip)
 	return ret;
 }
 
-IV_API int iv_fd_pump_is_done(struct iv_fd_pump *ip)
+int iv_fd_pump_is_done(struct iv_fd_pump *ip)
 {
 	return !!(ip->saw_fin == 2);
 }
