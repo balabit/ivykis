@@ -53,8 +53,10 @@ unsigned long iv_get_thread_id(void)
 #elif defined(HAVE_THR_SELF) && defined(HAVE_THREAD_H)
 	thread_id = thr_self();
 #else
+#ifndef NO_PTHREAD_SELF_USAGE_WARNING
 #warning using pthread_self for iv_get_thread_id
 	thread_id = pthr_self();
+#endif
 #endif
 
 	return thread_id;
