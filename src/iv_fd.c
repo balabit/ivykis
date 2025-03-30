@@ -124,6 +124,10 @@ static void select_poll_method(struct iv_state *st, char* select)
 #endif
 	else if (strcmp(select, iv_fd_poll_method_poll.name) == 0)
 		try_set_poll_method(st, &iv_fd_poll_method_poll);
+#ifdef HAVE_IO_URING_QUEUE_INIT
+	else if (strcmp(select, iv_fd_poll_method_uring.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_uring);
+#endif
 }
 
 static void try_select_poll_method(struct iv_state *st, char* exclude)
@@ -148,6 +152,10 @@ static void try_select_poll_method(struct iv_state *st, char* exclude)
 	consider_poll_method(st, exclude, &iv_fd_poll_method_ppoll);
 #endif
 	consider_poll_method(st, exclude, &iv_fd_poll_method_poll);
+#ifdef HAVE_IO_URING_QUEUE_INIT
+	/* Add uring as a last option for now still it is not stabilized perfectly */
+	consider_poll_method(st, exclude, &iv_fd_poll_method_uring);
+#endif
 }
 
 static void iv_fd_init_first_thread(struct iv_state *st)
