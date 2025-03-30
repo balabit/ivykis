@@ -76,31 +76,58 @@ static int method_is_excluded(const char *exclude, const char *name)
 	return 0;
 }
 
-static void consider_poll_method(struct iv_state *st, const char *exclude,
-				 const struct iv_fd_poll_method *m)
+static void try_set_poll_method(struct iv_state *st,
+				const struct iv_fd_poll_method *m)
 {
-	if (method == NULL && !method_is_excluded(exclude, m->name)) {
+	if (method == NULL) {
 		if (m->init(st) >= 0)
 			method = m;
 	}
 }
 
-static void iv_fd_init_first_thread(struct iv_state *st)
+static void consider_poll_method(struct iv_state *st, const char *exclude,
+				 const struct iv_fd_poll_method *m)
 {
-	int euid;
-	char *exclude;
+	if (method == NULL && !method_is_excluded(exclude, m->name))
+		try_set_poll_method(st, m);
+}
 
-	euid = geteuid();
+static void select_poll_method(struct iv_state *st, char* select)
+{
+	if (select == NULL)
+		return;
+#ifdef HAVE_PORT_CREATE
+	else if (strcmp(select, iv_fd_poll_method_port_timer.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_port_timer);
+	else if (strcmp(select, iv_fd_poll_method_port.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_port);
+#endif
+#ifdef HAVE_SYS_DEVPOLL_H
+	else if (strcmp(select, iv_fd_poll_method_dev_poll.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_dev_poll);
+#endif
+#if defined(HAVE_EPOLL_CREATE) && defined(HAVE_TIMERFD_CREATE)
+	else if (strcmp(select, iv_fd_poll_method_epoll_timerfd.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_epoll_timerfd);
+#endif
+#ifdef HAVE_EPOLL_CREATE
+	else if (strcmp(select, iv_fd_poll_method_epoll.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_epoll);
+#endif
+#ifdef HAVE_KQUEUE
+	else if (strcmp(select, iv_fd_poll_method_kqueue.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_kqueue);
+#endif
+#ifdef HAVE_PPOLL
+	else if (strcmp(select, iv_fd_poll_method_ppoll.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_ppoll);
+#endif
+	else if (strcmp(select, iv_fd_poll_method_poll.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_poll);
+}
 
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGURG, SIG_IGN);
-
-	sanitise_nofile_rlimit(euid);
-
-	exclude = getenv("IV_EXCLUDE_POLL_METHOD");
-	if (exclude != NULL && getuid() != euid)
-		exclude = NULL;
-
+static void try_select_poll_method(struct iv_state *st, char* exclude)
+{
 #ifdef HAVE_PORT_CREATE
 	consider_poll_method(st, exclude, &iv_fd_poll_method_port_timer);
 	consider_poll_method(st, exclude, &iv_fd_poll_method_port);
@@ -121,6 +148,26 @@ static void iv_fd_init_first_thread(struct iv_state *st)
 	consider_poll_method(st, exclude, &iv_fd_poll_method_ppoll);
 #endif
 	consider_poll_method(st, exclude, &iv_fd_poll_method_poll);
+}
+
+static void iv_fd_init_first_thread(struct iv_state *st)
+{
+	int euid = geteuid();
+
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGURG, SIG_IGN);
+
+	sanitise_nofile_rlimit(euid);
+
+	char *select = getenv("IV_SELECT_POLL_METHOD");
+	if (select && strlen(select) > 0)
+		select_poll_method(st, select);
+	else {
+		char *exclude = getenv("IV_EXCLUDE_POLL_METHOD");
+		if (exclude != NULL && getuid() != euid)
+			exclude = NULL;
+		try_select_poll_method(st, exclude);
+	}
 
 	if (method == NULL)
 		iv_fatal("iv_init: can't find suitable event dispatcher");
