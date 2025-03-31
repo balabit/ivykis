@@ -157,7 +157,7 @@ struct iv_fd_ {
 	uint8_t			registered_bands;
 
 #if defined(HAVE_SYS_DEVPOLL_H) || defined(HAVE_EPOLL_CREATE) ||	\
-    defined(HAVE_KQUEUE) || defined(HAVE_PORT_CREATE)
+    defined(HAVE_KQUEUE) || defined(HAVE_PORT_CREATE) || defined(HAVE_IO_URING_QUEUE_INIT)
 	/*
 	 * ->list_notify is used by poll methods that defer updating
 	 * kernel registrations to ->poll() time.
@@ -176,7 +176,9 @@ struct iv_fd_ {
 		struct iv_avl_node	avl_node;
 #endif
 		int			index;
+#ifdef HAVE_IO_URING_QUEUE_INIT
 		int			sqes_in_flight;
+#endif
 	} u;
 };
 

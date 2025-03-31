@@ -372,7 +372,7 @@ static void iv_fd_register_prologue(struct iv_state *st, struct iv_fd_ *fd)
 	fd->ready_bands = 0;
 	fd->registered_bands = 0;
 #if defined(HAVE_SYS_DEVPOLL_H) || defined(HAVE_EPOLL_CREATE) ||	\
-    defined(HAVE_KQUEUE) || defined(HAVE_PORT_CREATE)
+    defined(HAVE_KQUEUE) || defined(HAVE_PORT_CREATE) || defined(HAVE_IO_URING_QUEUE_INIT)
 	INIT_IV_LIST_HEAD(&fd->list_notify);
 #endif
 
