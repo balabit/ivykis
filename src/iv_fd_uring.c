@@ -119,7 +119,7 @@ iv_fd_uring_handle_fd_cqe(struct iv_state *st, struct iv_list_head *active,
 
 		if (cqe->res & (POLLERR | POLLHUP))
 			iv_fd_make_ready(active, fd, MASKERR);
-	} else if (cqe->res != -ECANCELED) {
+	} else if (cqe->res != -ECANCELED && cqe->res != -ENOENT && cqe->res != 0) {
 		iv_fatal("iv_fd_uring_handle_fd_cqe: got error "
 			 "%d[%s] for fd %d", -cqe->res,
 			 strerror(-cqe->res), fd->fd);
