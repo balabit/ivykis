@@ -92,7 +92,7 @@ static int iv_fd_uring_init(struct iv_state *st)
 			INIT_IV_LIST_HEAD(&st->u.uring.active);
 			st->u.uring.unsubmitted_sqes = 0;
 			st->u.uring.timer_expired = 0;
-
+			st->u.uring.ts = (struct __kernel_timespec){0};
 			return 0;
 		}
 
@@ -323,6 +323,11 @@ static int iv_fd_uring_poll(struct iv_state *st,
 	return st->u.uring.timer_expired;
 }
 
+static void iv_fd_uring_register_fd(struct iv_state *st, struct iv_fd_ *fd)
+{
+	fd->u.sqes_in_flight = 0;
+}
+
 static void iv_fd_uring_unregister_fd(struct iv_state *st, struct iv_fd_ *fd)
 {
 	if (!iv_list_empty(&fd->list_notify)) {
@@ -366,6 +371,7 @@ const struct iv_fd_poll_method iv_fd_poll_method_uring = {
 	.set_poll_timeout	= iv_fd_uring_set_poll_timeout,
 	.clear_poll_timeout	= iv_fd_uring_clear_poll_timeout,
 	.poll			= iv_fd_uring_poll,
+	.register_fd	= iv_fd_uring_register_fd,
 	.unregister_fd		= iv_fd_uring_unregister_fd,
 	.notify_fd		= iv_fd_uring_notify_fd,
 	.notify_fd_sync		= iv_fd_uring_notify_fd_sync,
