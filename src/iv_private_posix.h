@@ -93,6 +93,11 @@ struct iv_state {
 			struct pollfd		*pfds;
 			struct iv_fd_		**fds;
 			int			num_regd_fds;
+#ifdef HAVE_INOTIFY_INIT
+			// struct {
+			// 	int fd;
+			// } inotify;
+#endif
 		} poll;
 
 #ifdef HAVE_PORT_CREATE
@@ -125,6 +130,11 @@ struct iv_fd_ {
 	void			(*handler_in)(void *);
 	void			(*handler_out)(void *);
 	void			(*handler_err)(void *);
+
+	/* DANGER: everything below should fit currently to the size of
+	 * 				 void	*pad[11];
+	 *         as it is defined in the iv_fd struct (iv.h.in).
+	 */
 
 	/*
 	 * If this fd gathered any events during this polling round,
@@ -180,6 +190,13 @@ struct iv_fd_ {
 		int			sqes_in_flight;
 #endif
 	} u;
+
+#ifdef HAVE_INOTIFY_INIT
+		struct {
+			int fd;
+			int wd;
+		} inotify;
+#endif
 };
 
 struct iv_fd_poll_method {
