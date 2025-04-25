@@ -217,7 +217,11 @@ static void iv_fd_uring_flush_one(struct iv_state *st, struct iv_fd_ *fd)
 
 	if (fd->registered_bands) {
 		sqe = iv_fd_uring_get_sqe(st);
-		io_uring_prep_poll_remove(sqe, fd);
+#ifdef LIBURING_HAVE_DATA64
+    io_uring_prep_poll_remove(sqe, (__u64)(uintptr_t)fd);
+#else
+    io_uring_prep_poll_remove(sqe, fd);
+#endif
 		io_uring_sqe_set_data(sqe, fd);
 		fd->u.sqes_in_flight++;
 	}
