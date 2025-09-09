@@ -32,6 +32,11 @@
 #include <windows.h>
 #endif
 
+#ifdef _AIX
+/* Avoid unresolved thr_self() in static builds */
+#define thr_self() pthread_self()
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
