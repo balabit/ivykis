@@ -1,7 +1,8 @@
 AC_PREREQ(2.59)
 AC_INIT([ivykis-test-mt], [0.1], [libivykis-discuss@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([iv_event_bench.c])
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
