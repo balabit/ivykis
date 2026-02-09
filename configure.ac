@@ -2,7 +2,7 @@ AC_PREREQ(2.59)
 AC_INIT([ivykis], [0.43.2], [libivykis-discuss@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([src/iv_avl.c])
 AC_CONFIG_SUBDIRS([test.mt])
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
@@ -22,9 +22,8 @@ aix7.*)
 esac
 
 # Checks for programs.
-LT_INIT
+LT_INIT([win32-dll])
 AC_PROG_CC
-AC_PROG_LIBTOOL
 
 # Build with -Wall.
 CFLAGS="$CFLAGS -Wall"
@@ -288,11 +287,6 @@ AC_CACHE_CHECK(whether $LD supports symbol version scripts,
 		[ac_cv_prog_ld_version_script=yes], [])
 	])
 LDFLAGS=$ac_save_LDFLAGS
-
-else
-
-# Build a libivykis DLL.
-AC_LIBTOOL_WIN32_DLL
 
 fi
 
