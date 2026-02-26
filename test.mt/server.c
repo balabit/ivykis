@@ -53,7 +53,8 @@ static void handler(void *_h)
 		int len;
 
 		len = snprintf(buf, 128, "this is port %d\n", h->port);
-		write(ret, buf, len);
+		ssize_t written = write(ret, buf, len);
+		(void)written; // silence ignoring return value  (and this way, unused variable) warning
 		close(ret);
 
 		if (!(++conns % 10000))
