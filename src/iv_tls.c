@@ -55,7 +55,7 @@ void iv_tls_thread_init(struct iv_state *st)
 
 		itu = iv_container_of(ilh, struct iv_tls_user, list);
 		if (itu->init_thread != NULL)
-			itu->init_thread(((void *)st) + itu->state_offset);
+			itu->init_thread(((char *)st) + itu->state_offset);
 	}
 }
 
@@ -68,7 +68,7 @@ void iv_tls_thread_deinit(struct iv_state *st)
 
 		itu = iv_container_of(ilh, struct iv_tls_user, list);
 		if (itu->deinit_thread != NULL)
-			itu->deinit_thread(((void *)st) + itu->state_offset);
+			itu->deinit_thread(((char *)st) + itu->state_offset);
 	}
 }
 
@@ -79,7 +79,7 @@ __iv_tls_user_ptr(const struct iv_state *st, const struct iv_tls_user *itu)
 		iv_fatal("iv_tls_user_ptr: called on unregistered iv_tls_user");
 
 	if (st != NULL)
-		return ((void *)st) + itu->state_offset;
+		return ((char *)st) + itu->state_offset;
 
 	return NULL;
 }
