@@ -35,6 +35,7 @@ PROGS			+= iv_inotify_test
 endif
 
 TESTS			+= iv_fd_pipe_error_test	\
+			   iv_fd_pipe_fork_test		\
 			   iv_signal_test
 
 endif
@@ -47,6 +48,7 @@ connectfail_SOURCES		= connectfail.c
 connectreset_SOURCES		= connectreset.c
 iv_event_raw_test_SOURCES	= iv_event_raw_test.c
 iv_fd_pipe_error_test_SOURCES	= iv_fd_pipe_error_test.c
+iv_fd_pipe_fork_test_SOURCES	= iv_fd_pipe_fork_test.c
 iv_fd_pump_discard_SOURCES	= iv_fd_pump_discard.c
 iv_fd_pump_echo_SOURCES		= iv_fd_pump_echo.c
 iv_popen_test_SOURCES		= iv_popen_test.c

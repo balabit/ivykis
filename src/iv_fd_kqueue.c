@@ -91,14 +91,53 @@ iv_fd_kqueue_queue_one(struct kevent *kev, int *_num, struct iv_fd_ *fd)
 	*_num = num;
 }
 
+/*
+ * Apply a changelist with EV_RECEIPT so kqueue reports a result for
+ * every change.  Without an eventlist, kevent() stops at the first
+ * failure and returns -1.
+ *
+ * Tolerate ENOENT/EBADF for EV_DELETE: the kernel may already have
+ * auto-removed that filter (e.g. pipe EOF/close race).  Other errors
+ * remain fatal.
+ */
 static int __kevent_retry(int kq, const struct kevent *changelist, int nchanges)
 {
+	if (nchanges <= 0)
+		return 0;
+
+	struct kevent changes[nchanges];
+	for (int i = 0; i < nchanges; i++) {
+		changes[i] = changelist[i];
+		changes[i].flags |= EV_RECEIPT;
+	}
+
 	struct timespec to = { 0, 0 };
 	int ret;
-
 	do {
-		ret = kevent(kq, changelist, nchanges, NULL, 0, &to);
+		ret = kevent(kq, changes, nchanges, changes, nchanges, &to);
 	} while (ret < 0 && errno == EINTR);
+
+	if (ret < 0)
+		return ret;
+
+	for (int i = 0; i < ret; i++) {
+		if (!(changes[i].flags & EV_ERROR))
+			continue;
+		if (changes[i].data == 0)
+			continue;
+
+		/*
+		 * Tolerate "filter not present" results for EV_DELETE: the
+		 * kernel may have auto-removed the filter (e.g. on pipe EOF)
+		 * between our last upload and this teardown change.
+		 */
+		if ((changelist[i].flags & EV_DELETE) &&
+		    (changes[i].data == ENOENT || changes[i].data == EBADF))
+			continue;
+
+		errno = changes[i].data;
+		return -1;
+	}
 
 	return ret;
 }
