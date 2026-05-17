@@ -205,22 +205,65 @@ static int iv_fd_kqueue_poll(struct iv_state *st,
 			continue;
 		}
 
-		if (batch[i].flags & EV_ERROR) {
-			int err = batch[i].data;
-			int fd = batch[i].ident;
+		/*
+		 * Per-fd error conditions are application-level, not internal
+		 * kqueue failures.  Mark the fd ready with MASKERR so the registered
+		 * error handler is dispatched by normal ready processing,
+		 * rather than bailing out, consistent with epoll's EPOLLERR/EPOLLHUP
+		 * handling.
+		 */
 
-			iv_fatal("iv_fd_kqueue_poll: got error %d[%s] "
-				 "polling fd %d", err, strerror(err), fd);
+		/*
+		 * EV_ERROR: kqueue reports per-change failures (e.g.
+		 * EVFILT_WRITE EV_ADD on a pipe whose read end is already
+		 * closed -> EPIPE on FreeBSD) via an eventlist entry with
+		 * EV_ERROR set and data = errno.  macOS happens to accept
+		 * the same registration and surface the condition through
+		 * EV_EOF on the write filter instead, so this branch is a
+		 * no-op there for that scenario, but the contract applies
+		 * to every kqueue platform.
+		 */
+		if (batch[i].flags & EV_ERROR) {
+			fd = (void *)batch[i].udata;
+			/*
+			 * The EV_ADD that produced this EV_ERROR was rejected
+			 * by the kernel, so the filter is NOT actually registered
+			 * in kqueue.  Clear the corresponding bit from
+			 * registered_bands to prevent a later EV_DELETE (issued
+			 * on unregister/close) from failing with ENOENT/EBADF
+			 * and tripping iv_fatal() in kevent_retry().
+			 */
+			if (batch[i].filter == EVFILT_READ) {
+				fd->registered_bands &= ~MASKIN;
+				iv_fd_make_ready(active, fd, MASKIN | MASKERR);
+			} else if (batch[i].filter == EVFILT_WRITE) {
+				fd->registered_bands &= ~MASKOUT;
+				iv_fd_make_ready(active, fd, MASKOUT | MASKERR);
+			} else {
+				fd->registered_bands &= ~(MASKIN | MASKOUT);
+				iv_fd_make_ready(active, fd, MASKIN | MASKOUT | MASKERR);
+			}
+			continue;
 		}
 
 		fd = (void *)batch[i].udata;
-		if (batch[i].filter == EVFILT_READ) {
-			iv_fd_make_ready(active, fd, MASKIN);
-		} else if (batch[i].filter == EVFILT_WRITE) {
-			iv_fd_make_ready(active, fd, MASKOUT);
-		} else {
-			iv_fatal("iv_fd_kqueue_poll: got message from "
-				 "filter %d", batch[i].filter);
+		if (batch[i].filter == EVFILT_READ)	{
+			int bands = MASKIN;
+			/* EV_EOF on read: write end closed; FreeBSD and macOS. */
+			if (batch[i].flags & EV_EOF)
+				bands |= MASKERR;
+			iv_fd_make_ready(active, fd, bands);
+		}
+		else if (batch[i].filter == EVFILT_WRITE) {
+			int bands = MASKOUT;
+			/* EV_EOF on write: read end closed (macOS); FreeBSD reports EPIPE via EV_ERROR. */
+			if (batch[i].flags & EV_EOF)
+				bands |= MASKERR;
+			iv_fd_make_ready(active, fd, bands);
+		}
+		else {
+			iv_fatal("iv_fd_kqueue_poll: got message from filter %d",
+							 batch[i].filter);
 		}
 	}
 
