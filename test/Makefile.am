@@ -34,6 +34,11 @@ if HAVE_INOTIFY
 PROGS			+= iv_inotify_test
 endif
 
+if HAVE_KQUEUE
+PROGS			+= iv_fd_register_try_test
+TESTS			+= iv_fd_register_try_test
+endif
+
 TESTS			+= iv_fd_pipe_error_test	\
 			   iv_fd_pipe_fork_test		\
 			   iv_signal_test
@@ -47,6 +52,7 @@ client_SOURCES			= client.c
 connectfail_SOURCES		= connectfail.c
 connectreset_SOURCES		= connectreset.c
 iv_event_raw_test_SOURCES	= iv_event_raw_test.c
+iv_fd_register_try_test_SOURCES	= iv_fd_register_try_test.c
 iv_fd_pipe_error_test_SOURCES	= iv_fd_pipe_error_test.c
 iv_fd_pipe_fork_test_SOURCES	= iv_fd_pipe_fork_test.c
 iv_fd_pump_discard_SOURCES	= iv_fd_pump_discard.c
