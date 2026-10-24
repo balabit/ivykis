@@ -31,9 +31,11 @@ SRC			+= iv_fd.c			\
 if WIN32_POSIX_CORE
 SRC			+= iv_event_raw_win32sock.c	\
 			   iv_fd_win32.c		\
-			   iv_fd_wsapoll.c
+			   iv_fd_wsapoll.c		\
+			   iv_signal_win32.c
 
-INC			+= include/iv_win32.h
+INC			+= include/iv_signal.h		\
+			   include/iv_win32.h
 else
 SRC			+= iv_event_raw_posix.c		\
 			   iv_fd_poll.c			\

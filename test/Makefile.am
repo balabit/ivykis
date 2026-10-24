@@ -6,11 +6,14 @@ LDADD			= $(top_builddir)/src/libivykis.la
 
 if WIN32_POSIX_CORE
 AM_CPPFLAGS		+= -include $(srcdir)/win32_compat.h
+TESTS			= iv_signal_win32_test
+else
+TESTS			=
 endif
 
 PROGS			= iv_event_raw_bench_timer
 
-TESTS			= avl				\
+TESTS			+= avl				\
 			  event_unregister_bug		\
 			  iv_event_raw_test		\
 			  struct_sizes			\
