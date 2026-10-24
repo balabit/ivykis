@@ -11,7 +11,8 @@
  *  - console control events (installed with the first registration):
  *	CTRL_C_EVENT				-> SIGINT
  *	CTRL_BREAK_EVENT			-> SIGHUP
- *	CTRL_CLOSE/LOGOFF/SHUTDOWN_EVENT	-> SIGTERM
+ *	CTRL_CLOSE/SHUTDOWN_EVENT		-> SIGTERM
+ *	CTRL_LOGOFF_EVENT			-> ignored (services only)
  *
  *  - iv_signal_raise(), to be called by the application, e.g. from a
  *    service control handler (SERVICE_CONTROL_STOP -> SIGTERM) or from
@@ -175,10 +176,16 @@ static BOOL WINAPI iv_signal_console_handler(DWORD ctrl_type)
 		signum = SIGHUP;
 		break;
 	case CTRL_CLOSE_EVENT:
-	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
 		signum = SIGTERM;
 		break;
+	case CTRL_LOGOFF_EVENT:
+		/*
+		 * Only services receive this, whenever *any* user logs
+		 * off: it must not stop the process.  Report it as
+		 * handled, so that the default handler doesn't exit.
+		 */
+		return TRUE;
 	default:
 		return FALSE;
 	}
