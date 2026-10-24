@@ -21,10 +21,19 @@
 #ifndef __IV_H
 #define __IV_H
 
-#ifndef _WIN32
+@IV_WIN32_POSIX_CORE_DEFINE@
+#if defined(_WIN32) && !defined(IV_WIN32_POSIX_CORE)
+#define IV_WIN32_NATIVE 1
+#endif
+
+#ifndef IV_WIN32_NATIVE
 #include <errno.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/socket.h>
+#else
+#include <winsock2.h>
+#endif
 #include <@ac_cv_timespec_hdr@>
 #include <unistd.h>
 #else
@@ -62,7 +71,7 @@ const struct timespec *__iv_now_location_valid(void);
 void iv_invalidate_now(void);
 
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 /*
  * File descriptor handling.
  */
@@ -86,7 +95,7 @@ void iv_fd_set_handler_err(struct iv_fd *, void (*)(void *));
 #endif
 
 
-#ifdef _WIN32
+#ifdef IV_WIN32_NATIVE
 /*
  * Handle handling.
  */

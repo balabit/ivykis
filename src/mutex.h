@@ -21,7 +21,7 @@
 #ifndef __MUTEX_H
 #define __MUTEX_H
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 #include "pthr.h"
 
 #ifdef HAVE_PRAGMA_WEAK

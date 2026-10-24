@@ -43,6 +43,13 @@ static void iv_state_destructor(void *data)
 {
 	struct iv_state *st = data;
 
+	/*
+	 * POSIX only calls destructors for non-NULL values, but
+	 * winpthreads calls them for NULL values as well.
+	 */
+	if (st == NULL)
+		return;
+
 	pthr_setspecific(&iv_state_key, st);
 	__iv_deinit(st);
 }

@@ -29,7 +29,7 @@ int main()
 
 	fail = 0;
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 	if (sizeof(struct iv_fd) < sizeof(struct iv_fd_)) {
 		fprintf(stderr, "struct iv_fd: %d\n",
 			(int)sizeof(struct iv_fd));

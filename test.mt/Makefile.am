@@ -18,7 +18,11 @@ PROGS			+= iv_event_bench_signal	\
 endif
 
 if HAVE_WIN32
+if WIN32_POSIX_CORE
+AM_CPPFLAGS		+= -include $(top_srcdir)/../test/win32_compat.h
+else
 PROGS			+= handle
+endif
 endif
 
 noinst_PROGRAMS		= $(PROGS)
