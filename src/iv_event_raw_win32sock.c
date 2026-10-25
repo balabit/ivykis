@@ -4,9 +4,14 @@
  * iv_event_raw for the POSIX core on Windows.
  *
  * POSIX uses a pipe (or eventfd) here; Windows pipes can't be polled
- * with WSAPoll()/AFD, so we use a connected pair of loopback TCP
- * sockets instead, wrapped into CRT fds so they can be registered
- * with iv_fd.
+ * with WSAPoll()/AFD, so we use a connected pair of sockets instead,
+ * wrapped into CRT fds so they can be registered with iv_fd.
+ *
+ * AF_UNIX stream sockets (Windows 10 1803 and later) are used if
+ * available: a 1-byte send() costs about a tenth of one on a loopback
+ * TCP connection, and every iv_event_post() to another thread (e.g.
+ * waking an iv_work pool thread) is one send().  Loopback TCP is the
+ * fallback.
  *
  * This library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License version
@@ -19,6 +24,7 @@
 #include <iv.h>
 #include <iv_event_raw.h>
 #include <ws2tcpip.h>
+#include <afunix.h>
 #include "iv_private.h"
 
 static int same_addr(const struct sockaddr_in *a, const struct sockaddr_in *b)
@@ -28,11 +34,117 @@ static int same_addr(const struct sockaddr_in *a, const struct sockaddr_in *b)
 	       a->sin_addr.s_addr == b->sin_addr.s_addr;
 }
 
+static int recv_all(SOCKET s, char *buf, int len)
+{
+	while (len > 0) {
+		int ret = recv(s, buf, len, 0);
+
+		if (ret <= 0)
+			return -1;
+		buf += ret;
+		len -= ret;
+	}
+
+	return 0;
+}
+
+/*
+ * Create a connected pair of AF_UNIX stream sockets through a temporary
+ * socket file, removed right away.  Returns 0 on success.  sv[0] is the
+ * reading end, sv[1] the writing end.
+ */
+static int iv_win32_socketpair_unix(SOCKET sv[2])
+{
+	static volatile LONG counter;
+	struct sockaddr_un addr;
+	wchar_t wpath[MAX_PATH + 64];
+	SOCKET listener = INVALID_SOCKET;
+	SOCKET rd = INVALID_SOCKET;
+	SOCKET wr = INVALID_SOCKET;
+	LARGE_INTEGER pc;
+	char cookie[sizeof(LONG64) * 2];
+	char peer_cookie[sizeof(cookie)];
+	LONG64 c[2];
+	DWORD timeout = 1000;
+	DWORD len;
+	int err;
+
+	QueryPerformanceCounter(&pc);
+	c[0] = ((LONG64)GetCurrentProcessId() << 32) ^ InterlockedIncrement(&counter);
+	c[1] = pc.QuadPart ^ (LONG64)(intptr_t)&pc;
+	memcpy(cookie, c, sizeof(cookie));
+
+	len = GetTempPathW(MAX_PATH + 1, wpath);
+	if (len == 0 || len > MAX_PATH)
+		return -1;
+	_snwprintf(wpath + len, 63, L"iv-event-%lu-%lld",
+		   GetCurrentProcessId(), (long long)c[1]);
+	wpath[MAX_PATH + 63] = 0;
+
+	/* sun_path is UTF-8 */
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	if (!WideCharToMultiByte(CP_UTF8, 0, wpath, -1, addr.sun_path,
+				 sizeof(addr.sun_path), NULL, NULL))
+		return -1;
+
+	listener = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (listener == INVALID_SOCKET)
+		return -1;
+	if (bind(listener, (struct sockaddr *)&addr, sizeof(addr)) ||
+	    listen(listener, 1))
+		goto err;
+
+	wr = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (wr == INVALID_SOCKET ||
+	    connect(wr, (struct sockaddr *)&addr, sizeof(addr)) ||
+	    send(wr, cookie, sizeof(cookie), 0) != sizeof(cookie))
+		goto err;
+
+	/*
+	 * Make sure that the connection we accept is the one we made, and
+	 * not one from another local process racing us: it sends the
+	 * cookie first.
+	 */
+	for (;;) {
+		rd = accept(listener, NULL, NULL);
+		if (rd == INVALID_SOCKET)
+			goto err;
+		setsockopt(rd, SOL_SOCKET, SO_RCVTIMEO,
+			   (const char *)&timeout, sizeof(timeout));
+		if (!recv_all(rd, peer_cookie, sizeof(peer_cookie)) &&
+		    !memcmp(cookie, peer_cookie, sizeof(cookie)))
+			break;
+		closesocket(rd);
+	}
+	timeout = 0;
+	setsockopt(rd, SOL_SOCKET, SO_RCVTIMEO,
+		   (const char *)&timeout, sizeof(timeout));
+
+	closesocket(listener);
+	DeleteFileW(wpath);
+
+	sv[0] = rd;
+	sv[1] = wr;
+
+	return 0;
+
+err:
+	err = WSAGetLastError();
+	closesocket(listener);
+	DeleteFileW(wpath);
+	if (wr != INVALID_SOCKET)
+		closesocket(wr);
+	WSASetLastError(err);
+
+	return -1;
+}
+
 /*
  * Create a connected pair of loopback TCP sockets.  Returns 0 on
  * success.  sv[0] is the reading end, sv[1] the writing end.
  */
-static int iv_win32_socketpair(SOCKET sv[2])
+static int iv_win32_socketpair_tcp(SOCKET sv[2])
 {
 	SOCKET listener = INVALID_SOCKET;
 	SOCKET rd = INVALID_SOCKET;
@@ -122,6 +234,14 @@ err:
 	WSASetLastError(err);
 
 	return -1;
+}
+
+static int iv_win32_socketpair(SOCKET sv[2])
+{
+	if (!iv_win32_socketpair_unix(sv))
+		return 0;
+
+	return iv_win32_socketpair_tcp(sv);
 }
 
 static void iv_event_raw_got_event(void *_this)
