@@ -31,7 +31,7 @@ struct iv_event_raw {
 	void			*cookie;
 	void			(*handler)(void *);
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 	struct iv_fd		event_rfd;
 	int			event_wfd;
 #else

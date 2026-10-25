@@ -51,6 +51,39 @@ static inline void IV_SIGNAL_INIT(struct iv_signal *this)
 int iv_signal_register(struct iv_signal *this);
 void iv_signal_unregister(struct iv_signal *this);
 
+#ifdef _WIN32
+/*
+ * There are no asynchronous signals on Windows.  Console
+ * control events are mapped to SIGINT/SIGHUP/SIGTERM automatically;
+ * anything else (e.g. service control requests) can be delivered with
+ * iv_signal_raise().  Returns the number of interests woken up.
+ */
+#define IV_SIGNAL_NSIG		64
+#ifndef SIGHUP
+#define SIGHUP			1
+#endif
+#ifndef SIGQUIT
+#define SIGQUIT			3
+#endif
+#ifndef SIGUSR1
+#define SIGUSR1			10
+#endif
+#ifndef SIGUSR2
+#define SIGUSR2			12
+#endif
+#ifndef SIGPIPE
+#define SIGPIPE			13
+#endif
+#ifndef SIGALRM
+#define SIGALRM			14
+#endif
+#ifndef SIGCHLD
+#define SIGCHLD			17
+#endif
+
+int iv_signal_raise(int signum);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -47,6 +47,19 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 		[AC_MSG_RESULT([unknown])
 		 AC_MSG_ERROR(Can't determine host system type.)])])
 
+# On Windows, ivykis can be built with its POSIX core on top of Winsock
+# (--enable-win32-posix-core, passed down from the top level configure).
+AC_ARG_ENABLE([win32-posix-core],
+	AS_HELP_STRING([--enable-win32-posix-core],
+		[on Windows, ivykis is built with its POSIX core]),
+	[], [enable_win32_posix_core=no])
+ac_cv_win32_posix_core=no
+if test $ac_cv_host_system = win32 && test x$enable_win32_posix_core = xyes
+then
+	ac_cv_win32_posix_core=yes
+	CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0A00 -pthread"
+fi
+
 if test $ac_cv_host_system = posix
 then
 
@@ -158,6 +171,7 @@ fi
 # Conditionals for OS type.
 AM_CONDITIONAL([HAVE_POSIX], [test $ac_cv_host_system = posix])
 AM_CONDITIONAL([HAVE_WIN32], [test $ac_cv_host_system = win32])
+AM_CONDITIONAL([WIN32_POSIX_CORE], [test $ac_cv_win32_posix_core = yes])
 
 # Other conditionals.
 AM_CONDITIONAL([HAVE_INOTIFY], [test x$ac_cv_func_inotify_init = xyes])

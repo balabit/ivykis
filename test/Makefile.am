@@ -4,9 +4,16 @@ AM_CPPFLAGS		= -D_GNU_SOURCE			\
 
 LDADD			= $(top_builddir)/src/libivykis.la
 
+if WIN32_POSIX_CORE
+AM_CPPFLAGS		+= -include $(srcdir)/win32_compat.h
+TESTS			= iv_signal_win32_test
+else
+TESTS			=
+endif
+
 PROGS			= iv_event_raw_bench_timer
 
-TESTS			= avl				\
+TESTS			+= avl				\
 			  event_unregister_bug		\
 			  iv_event_raw_test		\
 			  struct_sizes			\
@@ -18,6 +25,7 @@ TESTS			= avl				\
 			  timer_zero
 
 if HAVE_POSIX
+if !WIN32_POSIX_CORE
 PROGS			+= client			\
 			   connectfail			\
 			   connectreset			\
@@ -43,6 +51,7 @@ TESTS			+= iv_fd_pipe_error_test	\
 			   iv_fd_pipe_fork_test		\
 			   iv_signal_test
 
+endif
 endif
 
 noinst_PROGRAMS		= $(PROGS) $(TESTS)

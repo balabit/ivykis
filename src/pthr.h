@@ -30,7 +30,12 @@
 
 static inline int pthreads_available(void)
 {
+#ifdef _WIN32
+	/* winpthreads is always linked in on Windows. */
+	return 1;
+#else
 	return !!(pthread_create != NULL);
+#endif
 }
 
 
@@ -154,6 +159,7 @@ static inline int pthr_setspecific(pthr_key_t *key, const void *value)
 	return 0;
 }
 
+#ifndef _WIN32
 static inline int pthr_sigmask(int how, const sigset_t *set, sigset_t *oldset)
 {
 	if (pthreads_available())
@@ -161,6 +167,7 @@ static inline int pthr_sigmask(int how, const sigset_t *set, sigset_t *oldset)
 
 	return sigprocmask(how, set, oldset);
 }
+#endif
 
 
 #endif

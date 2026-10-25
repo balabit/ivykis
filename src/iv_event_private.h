@@ -18,7 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 static inline int event_rx_on(struct iv_state *st)
 {
 	if (method->event_rx_on != NULL)

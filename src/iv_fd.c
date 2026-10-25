@@ -24,12 +24,15 @@
 #include <limits.h>
 #include <signal.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/resource.h>
+#endif
 #include "iv_private.h"
 
 /* internal use *************************************************************/
 const struct iv_fd_poll_method *method;
 
+#ifndef _WIN32
 static void sanitise_nofile_rlimit(int euid)
 {
 	struct rlimit lim;
@@ -59,6 +62,7 @@ static void sanitise_nofile_rlimit(int euid)
 		setrlimit(RLIMIT_NOFILE, &lim);
 	}
 }
+#endif
 
 static int method_is_excluded(const char *exclude, const char *name)
 {
@@ -122,8 +126,13 @@ static void select_poll_method(struct iv_state *st, char* select)
 	else if (strcmp(select, iv_fd_poll_method_ppoll.name) == 0)
 		try_set_poll_method(st, &iv_fd_poll_method_ppoll);
 #endif
+#ifdef IV_WIN32_POSIX_CORE
+	else if (strcmp(select, iv_fd_poll_method_wsapoll.name) == 0)
+		try_set_poll_method(st, &iv_fd_poll_method_wsapoll);
+#else
 	else if (strcmp(select, iv_fd_poll_method_poll.name) == 0)
 		try_set_poll_method(st, &iv_fd_poll_method_poll);
+#endif
 #ifdef HAVE_IO_URING_QUEUE_INIT
 	else if (strcmp(select, iv_fd_poll_method_uring.name) == 0)
 		try_set_poll_method(st, &iv_fd_poll_method_uring);
@@ -151,7 +160,11 @@ static void try_select_poll_method(struct iv_state *st, char* exclude)
 #ifdef HAVE_PPOLL
 	consider_poll_method(st, exclude, &iv_fd_poll_method_ppoll);
 #endif
+#ifdef IV_WIN32_POSIX_CORE
+	consider_poll_method(st, exclude, &iv_fd_poll_method_wsapoll);
+#else
 	consider_poll_method(st, exclude, &iv_fd_poll_method_poll);
+#endif
 #ifdef HAVE_IO_URING_QUEUE_INIT
 	/* Add uring as a last option for now still it is not stabilized perfectly */
 	consider_poll_method(st, exclude, &iv_fd_poll_method_uring);
@@ -162,10 +175,14 @@ static void iv_fd_init_first_thread(struct iv_state *st)
 {
 	int euid = geteuid();
 
+#ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGURG, SIG_IGN);
 
 	sanitise_nofile_rlimit(euid);
+#else
+	iv_fd_win32_init();
+#endif
 
 	char *select = getenv("IV_SELECT_POLL_METHOD");
 	if (select && strlen(select) > 0)
@@ -293,6 +310,7 @@ void iv_fd_make_ready(struct iv_list_head *active, struct iv_fd_ *fd, int bands)
 	fd->ready_bands |= bands;
 }
 
+#ifndef _WIN32
 void iv_fd_set_cloexec(int fd)
 {
 	int flags;
@@ -314,6 +332,7 @@ void iv_fd_set_nonblock(int fd)
 		fcntl(fd, F_SETFL, flags);
 	}
 }
+#endif
 
 
 /* public use ***************************************************************/
@@ -390,8 +409,12 @@ static void iv_fd_register_epilogue(struct iv_state *st, struct iv_fd_ *fd)
 	iv_fd_set_cloexec(fd->fd);
 	iv_fd_set_nonblock(fd->fd);
 
+#ifndef _WIN32
 	yes = 1;
 	setsockopt(fd->fd, SOL_SOCKET, SO_OOBINLINE, &yes, sizeof(yes));
+#else
+	(void)yes;
+#endif
 }
 
 void iv_fd_register(struct iv_fd *_fd)

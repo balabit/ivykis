@@ -48,6 +48,26 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 		[AC_MSG_RESULT([unknown])
 		 AC_MSG_ERROR(Can't determine host system type.)])])
 
+# On Windows, optionally build the POSIX core (iv_fd & co.) on
+# top of Winsock instead of the legacy iv_handle based win32 core.
+AC_ARG_ENABLE([win32-posix-core],
+	AS_HELP_STRING([--enable-win32-posix-core],
+		[on Windows, build the POSIX core on top of Winsock instead of the legacy iv_handle based core]),
+	[], [enable_win32_posix_core=no])
+ac_cv_win32_posix_core=no
+if test $ac_cv_host_system = win32 && test x$enable_win32_posix_core = xyes
+then
+	ac_cv_host_system=posix
+	ac_cv_win32_posix_core=yes
+	IV_WIN32_POSIX_CORE_DEFINE="#define IV_WIN32_POSIX_CORE 1"
+	CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0A00 -pthread"
+	LIBS="$LIBS -lws2_32 -pthread"
+	AC_MSG_NOTICE([using the POSIX core on win32])
+else
+	IV_WIN32_POSIX_CORE_DEFINE="/* #undef IV_WIN32_POSIX_CORE */"
+fi
+AC_SUBST(IV_WIN32_POSIX_CORE_DEFINE)
+
 if test $ac_cv_host_system = posix
 then
 
@@ -148,7 +168,7 @@ AC_SUBST(ac_cv_timespec_hdr)
 # quite right on HP-UX.
 #
 case $host_os in
-hpux*)
+hpux*|mingw*)
 	;;
 *)
 	AC_DEFINE(HAVE_PRAGMA_WEAK, 1,
@@ -281,7 +301,7 @@ ac_save_LDFLAGS=$LDFLAGS
 AC_CACHE_CHECK(whether $LD supports symbol version scripts,
 	ac_cv_prog_ld_version_script,
 	[ac_cv_prog_ld_version_script=no
-	 echo "TEST { local: *; };" > conftest.ver
+	 echo "TEST { local: *; };" > conftest.ve
 	 LDFLAGS="$LDFLAGS -Wl,--version-script,conftest.ver"
 	 _AC_LINK_IFELSE([AC_LANG_PROGRAM()],
 		[ac_cv_prog_ld_version_script=yes], [])
@@ -294,6 +314,7 @@ fi
 # Conditionals for OS type.
 AM_CONDITIONAL([HAVE_POSIX], [test $ac_cv_host_system = posix])
 AM_CONDITIONAL([HAVE_WIN32], [test $ac_cv_host_system = win32])
+AM_CONDITIONAL([WIN32_POSIX_CORE], [test $ac_cv_win32_posix_core = yes])
 
 # Conditionals for poll methods.
 AM_CONDITIONAL([HAVE_DEV_POLL], [test x$ac_cv_header_sys_devpoll_h = xyes])

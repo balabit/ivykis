@@ -113,6 +113,15 @@ struct iv_state {
 			struct __kernel_timespec	ts;
 		} uring;
 #endif
+
+#ifdef IV_WIN32_POSIX_CORE
+		struct {
+			struct pollfd		*pfds;
+			struct iv_fd_		**fds;
+			int			num_regd_fds;
+			int			size;
+		} wsapoll;
+#endif
 	} u;
 };
 
@@ -224,6 +233,10 @@ extern const struct iv_fd_poll_method iv_fd_poll_method_port;
 extern const struct iv_fd_poll_method iv_fd_poll_method_port_timer;
 extern const struct iv_fd_poll_method iv_fd_poll_method_ppoll;
 extern const struct iv_fd_poll_method iv_fd_poll_method_uring;
+#ifdef IV_WIN32_POSIX_CORE
+extern const struct iv_fd_poll_method iv_fd_poll_method_wsapoll;
+#include "iv_win32_posix.h"
+#endif
 
 /* iv_fd.c */
 void iv_fd_init(struct iv_state *st);

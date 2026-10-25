@@ -22,22 +22,33 @@ INC			= include/iv_avl.h		\
 
 if HAVE_POSIX
 
-SRC			+= iv_event_raw_posix.c		\
-			   iv_fd.c			\
-			   iv_fd_poll.c			\
-			   iv_fd_pump.c			\
+SRC			+= iv_fd.c			\
 			   iv_main_posix.c		\
-			   iv_popen.c			\
-			   iv_signal.c			\
 			   iv_thread_posix.c		\
 			   iv_tid_posix.c		\
-			   iv_time_posix.c		\
+			   iv_time_posix.c
+
+if WIN32_POSIX_CORE
+SRC			+= iv_event_raw_win32sock.c	\
+			   iv_fd_win32.c		\
+			   iv_fd_wsapoll.c		\
+			   iv_signal_win32.c
+
+INC			+= include/iv_signal.h		\
+			   include/iv_win32.h
+else
+SRC			+= iv_event_raw_posix.c		\
+			   iv_fd_poll.c			\
+			   iv_fd_pump.c			\
+			   iv_popen.c			\
+			   iv_signal.c			\
 			   iv_wait.c
 
 INC			+= include/iv_fd_pump.h		\
 			   include/iv_popen.h		\
 			   include/iv_signal.h		\
 			   include/iv_wait.h
+endif
 
 if HAVE_DEV_POLL
 SRC			+= iv_fd_dev_poll.c
@@ -65,6 +76,9 @@ INC			+= include/iv_inotify.h
 endif
 
 LINKFLAGS	= -version-info 6:2:6
+if WIN32_POSIX_CORE
+LINKFLAGS	+= -no-undefined
+endif
 if HAVE_VERSIONING
 LINKFLAGS	+= -Wl,--version-script,$(top_srcdir)/libivykis.posix.ver \
 		   -Wl,-undefined-version

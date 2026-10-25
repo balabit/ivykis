@@ -31,7 +31,7 @@ struct iv_timer_ratnode {
 	void	*child[IV_TIMER_SPLIT_NODES];
 };
 
-#ifndef _WIN32
+#ifndef IV_WIN32_NATIVE
 #include "iv_private_posix.h"
 #else
 #include "iv_private_win32.h"
